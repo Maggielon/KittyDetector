@@ -86,11 +86,13 @@ private extension ViewController {
     }
     
     func setupVideo() {
-        var deviceInput: AVCaptureDeviceInput!
+        var input: AVCaptureDeviceInput?
 
-        let videoDevice = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .back).devices.first
+        guard let videoDevice = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .back).devices.first else {
+            return
+        }
         do {
-            deviceInput = try AVCaptureDeviceInput(device: videoDevice!)
+            input = try AVCaptureDeviceInput(device: videoDevice)
         } catch {
             print("Could not create video device input: \(error)")
             return
@@ -99,7 +101,7 @@ private extension ViewController {
         session.beginConfiguration()
         session.sessionPreset = .vga640x480
 
-        guard session.canAddInput(deviceInput) else {
+        guard let deviceInput = input, session.canAddInput(deviceInput) else {
             session.commitConfiguration()
             return
         }
@@ -117,11 +119,11 @@ private extension ViewController {
         let captureConnection = videoDataOutput.connection(with: .video)
         captureConnection?.isEnabled = true
         do {
-            try  videoDevice?.lockForConfiguration()
-            let dimensions = CMVideoFormatDescriptionGetDimensions((videoDevice?.activeFormat.formatDescription)!)
+            try  videoDevice.lockForConfiguration()
+            let dimensions = CMVideoFormatDescriptionGetDimensions(videoDevice.activeFormat.formatDescription)
             bufferSize.width = CGFloat(dimensions.width)
             bufferSize.height = CGFloat(dimensions.height)
-            videoDevice?.unlockForConfiguration()
+            videoDevice.unlockForConfiguration()
         } catch {
             print(error)
         }
